@@ -23,6 +23,7 @@ set -e
 
 file_temp="/tmp/.${UID}.${DISPLAY}.redshift-adjust-temp"
 file_bright="/tmp/.${UID}.${DISPLAY}.redshift-adjust-bright"
+file_gamma="/tmp/.${UID}.${DISPLAY}.redshift-adjust-gamma"
 
 
 if [ ! $# = 1 ] || [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
@@ -33,7 +34,10 @@ $0 t-TEMP    Decrease colour temperature by TEMP K
 $0 b=BRIG    Set brightness to BRIG
 $0 b+BRIG    Increase brightness to BRIG
 $0 b-BRIG    Decrease brightness to BRIG
-$0 -p        Print the current temperature and brightness
+$0 g=GAMM    Set gamma to GAMM
+$0 g+GAMM    Increase gamma to GAMM
+$0 g-GAMM    Decrease gamma to GAMM
+$0 -p        Print the current temperature, brightness, and gamma
 EOF
     if [ $# = 1 ]; then
 	exit 0
@@ -45,6 +49,10 @@ if [ ! -e "${file_temp}" ]; then
     temperature=$(redshift -p | sed -n 's/Color temperature: \(.*\)K/\1/p')
     echo $temperature > "${file_temp}"
 fi
+if [ ! -e "${file_gamma}" ]; then
+    gamma="1.0"
+    echo $gamma > "${file_gamma}"
+fi
 if [ ! -e "${file_bright}" ]; then
     brightness=$(redshift -p | sed -n 's/Brightness: \(.*\)/\1/p')
     echo $brightness > "${file_bright}"
@@ -54,6 +62,7 @@ fi
 if [ "${1}" = "-p" ] || [ "${1}" = "--print" ]; then
     echo "Temperature: $(cat ${file_temp})"
     echo "Brightness: $(cat ${file_bright})"
+    echo "Gamma: $(cat ${file_gamma})"
     exit 0
 fi
 
@@ -75,4 +84,7 @@ if [ "${1::1}" = "b" ]; then
     temperature="$(cat "${file_temp}")"
 fi
 
-redshift -O $temperature -b $brightness && echo $temperature > "${file_temp}" && echo $brightness > "${file_bright}"
+redshift -O $temperature -b $brightness -g $gamma\
+    && echo $temperature > "${file_temp}"\
+    && echo $brightness > "${file_bright}"\
+    && echo $gamma > "${file_gamma}"
